@@ -1,0 +1,33 @@
+#SSH Server
+if [ -d "$WORK_DIR" ]; then
+rm -Rf $WORK_DIR
+mkdir ~/$WORK_DIR
+fi
+
+#Copy artifacts from another project
+#Artifacts to copy
+/docker/**
+
+#Execute Windows batch command
+ECHO %GET_LATEST_ARTIFACT% %BRANCH_NAME% %PRODUCT_NAME% %PRODUCT_NAME% "%WORKSPACE%\app"
+powershell -executionpolicy bypass -file %GET_LATEST_ARTIFACT% %BRANCH_NAME% %PRODUCT_NAME% %PRODUCT_NAME% "%WORKSPACE%\app" || exit 1
+
+
+sudo chmod +x $WORK_DIR/entry-point.sh || exit 1
+
+sudo docker image prune -a --force
+sudo docker system prune --force
+echo transfer set stage 2
+sudo docker build \
+    --tag europe-west1-docker.pkg.dev/macro-kiln-247514/images/$CONTAINER_NAME:$VERSION  \
+    --tag europe-west1-docker.pkg.dev/macro-kiln-247514/images/$CONTAINER_NAME:latest \
+    --label $VERSION \
+    ./$WORK_DIR/  || exit 1
+docker push europe-west1-docker.pkg.dev/macro-kiln-247514/images/$CONTAINER_NAME:$VERSION || exit 1
+
+
+#Predefined parameters
+VERSION=$VERSION
+CONTAINER_NAME=$CONTAINER_NAME
+CONTAINER_TAG=$CONTAINER_TAG
+DEPLOY_TO_DEV_OTD_ENV =${DEPLOY_TO_DEV_OTD_ENV}
